@@ -1,23 +1,26 @@
 import mongoose, { Document, Schema } from "mongoose";
 
+// Define the IUser interface to represent the user model
 export interface IUser extends Document {
-  email: string;
+  facebookId?: string | null; 
   name: string;
-  password: string;
+  email: string;
+  password?: string;
   role: "customer" | "admin";
+  authProvider: "facebook";
   createdAt: Date;
   updatedAt: Date;
 }
 
-const userSchema = new Schema<IUser>(
-  {
-    name: { type: String, required: true },
-    email: { type: String, required: true, unique: true },
-    password: { type: String, required: true },
-    role: { type: String, enum: ["customer", "admin"], default: "customer" },
-  },
-  { timestamps: true }
-);
+// Define the user schema
+const userSchema = new Schema<IUser>({
+  facebookId: { type: String, default: null }, 
+  name: { type: String, required: true },
+  email: { type: String, required: true, unique: true },
+  password: { type: String},
+  role: { type: String, enum: ["customer", "admin"], default: "customer" },
+  authProvider:{type: String, enum: ["facebook"]}
+}, { timestamps: true });
 
 const UserModel = mongoose.model<IUser>("User", userSchema);
 export default UserModel;
