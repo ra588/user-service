@@ -4,6 +4,7 @@ import app from "./app";
 
 dotenv.config();
 
+// Start server after connecting to MongoDB
 const PORT = process.env.PORT || 5000;
 const MONGO_URI = process.env.MONGO_URI as string;
 

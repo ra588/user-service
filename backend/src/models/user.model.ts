@@ -1,5 +1,6 @@
 import mongoose, { Document, Schema } from "mongoose";
 
+// Define the USer interface and schema to represent users in MongoDB
 export interface IUser extends Document {
   facebookId?: string; 
   email?: string;
@@ -11,6 +12,7 @@ export interface IUser extends Document {
   updatedAt: Date;
 }
 
+// Mongoose schema definition
 const userSchema = new Schema<IUser>(
   {
     facebookId: { type: String, unique: true },

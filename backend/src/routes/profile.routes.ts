@@ -1,7 +1,5 @@
 import {Router} from "express";
-import facebookStrategy from "../controllers/facebook.strategy";
 import {IUser} from "../models/user.model";
-import { create } from "domain";
 
 const router = Router();
 
