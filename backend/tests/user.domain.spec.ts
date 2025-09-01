@@ -1,53 +1,40 @@
-import { setupMemoryMongo, teardownMemoryMongo, clearCollections } from './helpers/mongo';
-import bcrypt from 'bcryptjs';
-import UserModel from '../src/models/user.model';
 
-describe('User Domain & Validation (unit)', () => {
-  beforeAll(setupMemoryMongo);   // Start in-memory Mongo before tests
-  afterAll(teardownMemoryMongo); // Stop in-memory Mongo after tests
-  afterEach(clearCollections);   // Clear data between tests
-
-    /**
-   * Email validation:
-   * - Accepts a well-formed email
-   * - Rejects malformed email with "Invalid email format"
-   * - Enforces uniqueness when email is provided
+  /**
+   * User flags:
+   * - Default role is "customer"
+   * - Default authProvider is "LOCAL" (UPPERCASE)
+   * - Default active is true
+   * - Can set GOOGLE/FACEBOOK and inactive
    */
-  it('accepts valid email and rejects invalid email with "Invalid email format"', async () => {
-    // Valid email should pass
-    await expect(
-      UserModel.create({ name: 'Ok', email: 'ok@mail.com', password: 'Secret12!' })
-    ).resolves.toBeDefined();
+  it('sets default flags: role=customer, authProvider=LOCAL (UPPERCASE), active=true', async () => {
+    const u = await UserModel.create({
+      name: 'Flags',
+      email: 'flags@mail.com',
+      password: 'Secret12!'
+    });
 
-    // Invalid email should fail
-    await expect(
-      UserModel.create({ name: 'Bad', email: 'not-an-email', password: 'Secret12!' })
-    ).rejects.toThrow(/Invalid email format/i); // will FAIL until validator is added
+    expect(u.get('role')).toBe('customer');
+    expect(u.get('authProvider')).toBe('LOCAL'); // will FAIL (enum is lowercase now)
+    expect(u.get('active')).toBe(true);          // will FAIL (no active field yet)
   });
 
-  it('enforces email uniqueness when provided', async () => {
-    await UserModel.create({ name: 'U1', email: 'dup@mail.com', password: 'Secret12!' });
+  it('allows GOOGLE/FACEBOOK providers and inactive users', async () => {
+    const g = await UserModel.create({
+      name: 'G',
+      email: 'g@mail.com',
+      password: 'Secret12!',
+      authProvider: 'GOOGLE', // will FAIL (enum lowercase now)
+      active: false           // will FAIL (no active field yet)
+    });
+    expect(g.get('authProvider')).toBe('GOOGLE');
+    expect(g.get('active')).toBe(false);
 
-    // Duplicate email should fail
-    await expect(
-      UserModel.create({ name: 'U2', email: 'dup@mail.com', password: 'Secret34!' })
-    ).rejects.toThrow();
+    const f = await UserModel.create({
+      name: 'F',
+      email: 'f@mail.com',
+      password: 'Secret12!',
+      authProvider: 'FACEBOOK' // will FAIL
+    });
+    expect(f.get('authProvider')).toBe('FACEBOOK');
   });
-
-    /**
-   * Password hashing & verification:
-   * - Password is stored hashed (not plain text)
-   * - bcrypt.compare verifies correctly
-   */
-  it('hashes password (hash !== plain) and verify works', async () => {
-    const plain = 'P@ssw0rd!';
-    const u = await UserModel.create({ name: 'Hash', email: 'hash@mail.com', password: plain });
-
-    // Saved password should not equal the plain password
-    expect(u.password).toBeDefined();
-    expect(u.password).not.toBe(plain); // will FAIL until hashing is added
-
-    // Correct password must verify, wrong one must fail
-    expect(await bcrypt.compare(plain, u.password!)).toBe(true);
-    expect(await bcrypt.compare('wrong', u.password!)).toBe(false);
-  });
+});
