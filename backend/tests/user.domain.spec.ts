@@ -33,3 +33,21 @@ describe('User Domain & Validation (unit)', () => {
       UserModel.create({ name: 'U2', email: 'dup@mail.com', password: 'Secret34!' })
     ).rejects.toThrow();
   });
+
+    /**
+   * Password hashing & verification:
+   * - Password is stored hashed (not plain text)
+   * - bcrypt.compare verifies correctly
+   */
+  it('hashes password (hash !== plain) and verify works', async () => {
+    const plain = 'P@ssw0rd!';
+    const u = await UserModel.create({ name: 'Hash', email: 'hash@mail.com', password: plain });
+
+    // Saved password should not equal the plain password
+    expect(u.password).toBeDefined();
+    expect(u.password).not.toBe(plain); // will FAIL until hashing is added
+
+    // Correct password must verify, wrong one must fail
+    expect(await bcrypt.compare(plain, u.password!)).toBe(true);
+    expect(await bcrypt.compare('wrong', u.password!)).toBe(false);
+  });
